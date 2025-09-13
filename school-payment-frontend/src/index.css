@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Add this new layer for custom component styles */
+@layer components {
+  /* This targets our table rows */
+  .fancy-row {
+    /* Add a smooth transition for the transform property */
+    @apply relative overflow-hidden transition-transform duration-300 ease-out;
+  }
+
+  /* This is the new hover effect */
+  .fancy-row:hover {
+    /* Scale the row up to 102% of its size and add a larger shadow */
+    @apply scale-[1.02] shadow-lg;
+  }
+  
+  /* This creates a pseudo-element that will be our glowing gradient */
+  .fancy-row::before {
+    content: '';
+    /* Position it to cover the entire row, but make it invisible initially */
+    @apply pointer-events-none absolute inset-0 z-0 opacity-0 transition-opacity duration-300;
+    
+    /* This is the magic: a radial gradient centered on our CSS variables */
+    background: radial-gradient(
+      600px circle at var(--mouse-x) var(--mouse-y),
+      rgba(129, 140, 248, 0.15), /* A light indigo color */
+      transparent 40%
+    );
+  }
+  
+  /* When hovering over the row, make the gradient visible */
+  .fancy-row:hover::before {
+    @apply opacity-100;
+  }
+}
+
