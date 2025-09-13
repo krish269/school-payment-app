@@ -1,0 +1,14 @@
+{
+  "name": "school-payment-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev:backend": "npm run start:dev --prefix school-payment-backend",
+    "dev:frontend": "npm run dev --prefix school-payment-frontend",
+    "dev": "concurrently \"npm:dev:backend\" \"npm:dev:frontend\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
+
