@@ -1,0 +1,16 @@
+#Ignore Node.js dependency folders
+node_modules/
+
+#Ignore compiled TypeScript output
+dist/
+
+#Ignore environment files
+.env
+
+#Ignore build output from frontend
+/school-payment-frontend/dist
+
+#Ignore OS-specific files
+.DS_Store
+
+# Ignore log files

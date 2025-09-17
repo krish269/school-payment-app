@@ -2,7 +2,8 @@ import './index.css';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import DashboardPage from './pages/DashboardPage';
 import LoginPage from './pages/LoginPage';
-import SchoolTransactionsPage from './pages/SchoolTransactionsPage'; // Import the new page
+import SchoolTransactionsPage from './pages/SchoolTransactionsPage';
+import SignUpPage from './pages/SignUpPage'; // Import the new signup page
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const token = localStorage.getItem('authToken');
@@ -17,6 +18,9 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        {/* --- This is the new route for the signup page --- */}
+        <Route path="/signup" element={<SignUpPage />} /> 
+
         <Route
           path="/"
           element={
@@ -25,9 +29,8 @@ function App() {
             </ProtectedRoute>
           }
         />
-        {/* --- This is the new route for the school-specific page --- */}
         <Route
-          path="/school/:schoolId" // The :schoolId part is a dynamic parameter from the URL
+          path="/school/:schoolId"
           element={
             <ProtectedRoute>
               <SchoolTransactionsPage />
