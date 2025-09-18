@@ -37,7 +37,7 @@ export class PaymentService {
     private readonly httpService: HttpService,
   ) {}
 
-  // ... createPayment and handleWebhook methods remain the same ...
+  // ... createPayment and handleWebhook methods are correct and do not need changes ...
   async createPayment(createPaymentDto: CreatePaymentDto): Promise<any> {
     const customOrderId = `ORD-${uuidv4()}`;
     const newOrder = new this.orderModel({
@@ -135,8 +135,6 @@ export class PaymentService {
   ): Promise<TransactionDetails[]> {
     const sortDirection = sortOrder === 'desc' ? -1 : 1;
     const sortField = sortBy || 'status_info.payment_time';
-
-    // The aggregation pipeline is now an array of stages
     const pipeline: PipelineStage[] = [
       {
         $lookup: {
@@ -148,10 +146,6 @@ export class PaymentService {
       },
       { $unwind: '$status_info' },
     ];
-
-    // --- Search Stage ---
-    // If a search term is provided, add a $match stage to filter the results.
-    // This performs a case-insensitive search on multiple fields.
     if (search) {
       pipeline.push({
         $match: {
@@ -163,8 +157,6 @@ export class PaymentService {
         },
       });
     }
-    
-    // --- Status Filter Stage ---
     if (status && status.toLowerCase() !== 'all') {
         pipeline.push({
             $match: {
@@ -172,8 +164,6 @@ export class PaymentService {
             }
         });
     }
-
-    // --- Final Projection and Sorting ---
     pipeline.push(
       {
         $project: {
@@ -191,18 +181,54 @@ export class PaymentService {
       { $skip: (page - 1) * limit },
       { $limit: Number(limit) },
     );
-
     return this.orderModel.aggregate<TransactionDetails>(pipeline).exec();
   }
 
-  // ... getTransactionsBySchool and getTransactionStatus methods remain the same ...
-  async getTransactionsBySchool(schoolId: string): Promise<OrderDocument[]> {
-    const orders = await this.orderModel.find({ school_id: schoolId }).exec();
-    if (!orders || orders.length === 0) {
+  // --- This is the updated method ---
+  async getTransactionsBySchool(schoolId: string): Promise<TransactionDetails[]> {
+    // We now use the same powerful aggregation pipeline for this method too.
+    const pipeline: PipelineStage[] = [
+      // Stage 1: Filter the orders by the provided schoolId FIRST. This is very efficient.
+      {
+        $match: {
+          school_id: schoolId,
+        },
+      },
+      // Stage 2: Join with the status information
+      {
+        $lookup: {
+          from: 'orderstatuses',
+          localField: '_id',
+          foreignField: 'order',
+          as: 'status_info',
+        },
+      },
+      { $unwind: '$status_info' },
+      // Stage 3: Format the output to match the main transactions endpoint
+      {
+        $project: {
+          _id: 0,
+          collect_id: '$status_info.collect_request_id',
+          school_id: 1,
+          gateway: '$gateway_name',
+          order_amount: '$status_info.order_amount',
+          transaction_amount: '$status_info.transaction_amount',
+          status: '$status_info.status',
+          custom_order_id: 1,
+        },
+      },
+      { $sort: { 'status_info.payment_time': -1 } } // Default sort
+    ];
+    
+    const results = await this.orderModel.aggregate<TransactionDetails>(pipeline).exec();
+
+    if (!results || results.length === 0) {
       throw new NotFoundException(`No transactions found for school ID ${schoolId}`);
     }
-    return orders;
+    return results;
   }
+
+  // ... getTransactionStatus method is correct and does not need changes ...
   async getTransactionStatus(
     customOrderId: string,
   ): Promise<{ status: string }> {
